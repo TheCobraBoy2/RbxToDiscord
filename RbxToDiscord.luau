@@ -3,7 +3,6 @@
 
 -- Services
 local HttpService = game:GetService("HttpService")
-local MarketplaceService = game:GetService("MarketplaceService")
 
 -- A running value to track if the script is currently executing or not
 local runningValue = nil
@@ -14,13 +13,6 @@ if not script:WaitForChild("running") then
 else
 	runningValue = script:WaitForChild("running")
 end
-
--- Get the game name using the PlaceId from the MarketplaceService
-local gameName = ""
-local placeId = game.PlaceId
-local success, productInfo = pcall(function()
-	return MarketplaceService:GetProductInfo(placeId)
-end)
 
 if success then
 	gameName = productInfo.Name
