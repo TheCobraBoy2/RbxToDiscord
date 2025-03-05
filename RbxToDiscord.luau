@@ -64,6 +64,18 @@ export type RbxToDiscordImpl = {
 	_color: string?
 }
 
+function checkType(variable, expectedType, variableName)
+	-- Get the actual type of the variable
+	local actualType = typeof(variable)
+
+	-- Check if the actual type matches the expected type
+	if actualType ~= expectedType then
+		-- Warn the user if types do not match
+		warn(string.format("Expected variable '%s' to be of type '%s', but got '%s'.", variableName, expectedType, actualType))
+		return false
+	end
+	return true
+end
 
 -- Initialize the RbxToDiscord table for functions and properties
 local RbxToDiscord = {}
@@ -77,6 +89,11 @@ RbxToDiscord.__index = RbxToDiscord
 -- @param Inline: Whether the field is inline (optional, defaults to false)
 -- @return: A table representing the field
 function RbxToDiscord:createField(options : fieldImpl) : field
+	checkType(options.name, "string", "name")
+	checkType(options.value, "string", "value")
+	if options.inline then
+		checkType(options.inline, "boolean", "inline")
+	end
 	return {
 		name = options.name,
 		value = options.value,
@@ -172,6 +189,10 @@ end
 -- @param delayTime: The delay time in seconds
 -- @return: The RbxToDiscord instance for chaining
 function RbxToDiscord:setDelay(delayTime : number) : RbxToDiscordImpl
+	if not checkType(delayTime, "number", "delayTime") then
+		warn("The webhook delay should be a number")
+		return self
+	end
 	self._payloadDelay = delayTime
 	return self
 end
@@ -180,11 +201,16 @@ end
 -- @param webhookUrl: The new Discord webhook URL
 -- @return: The RbxToDiscord instance for chaining
 function RbxToDiscord:connectWebhook(webhookUrl : string) : RbxToDiscordImpl
+	if not checkType(webhookUrl, "string", "webhookUrl") then
+		warn("The webhook url should be a string")
+		return self
+	end
 	self._url = webhookUrl
 	return self
 end
 
 function RbxToDiscord:sendMessage(message : string) : RbxToDiscordImpl
+	if self._running.Value then return self end
 	self._running.Value = true
 	local data = {
 		["content"] = message
@@ -213,9 +239,8 @@ end
 -- @param EmbedData: The embed data to send (optional)
 -- @return: The RbxToDiscord instance for chaining
 function RbxToDiscord:sendEmbed(EmbedData : embedData?) : RbxToDiscordImpl
-	if self._running.Value == true then return end
+	if self._running.Value == true then return self end
 	self._running.Value = true
-
 	-- Save the current payload to restore after sending
 	local cache = self._payload
 	if EmbedData then
@@ -227,6 +252,14 @@ function RbxToDiscord:sendEmbed(EmbedData : embedData?) : RbxToDiscordImpl
 	if not self._payload.Footer then
 		self._payload.Footer = "Powered by RbxToDiscord" 
 	end
+	
+	checkType(self._payload.Title, "string", "Title")
+	checkType(self._payload.Description, "string", "Description")
+	checkType(self._payload.Color, "number", "Color")
+	checkType(self._payload.AuthorName, "string", "AuthorName")
+	checkType(self._payload.IconUrl, "string", "IconUrl")
+	checkType(self._payload.Fields, "table", "Fields")
+	checkType(self._payload.Footer, "string", "Footer")
 
 	local embed = {
 		embeds = {
