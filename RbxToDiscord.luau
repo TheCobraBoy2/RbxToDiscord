@@ -43,7 +43,7 @@ export type embedDataImpl = {
 	IconUrl : string?,         -- The URL of the icon image for the author
 	Description : string,     -- The description/content of the embed
 	Color : number?,           -- The color of the embed (hex code as string)
-	Footer : string?,         -- Optional footer text (defaults to "Powered by Roblox" if not provided)
+	Footer : string?,         -- Optional footer text (defaults to "Powered by RbxToDiscord" if not provided)
 	Fields : {fieldImpl}?      -- A list of fields to include in the embed
 }
 
@@ -127,11 +127,11 @@ end
 -- @param webhookUrl: The Discord webhook URL
 -- @param embedData: Optional embed data to be sent with the webhook
 -- @return: An instance of RbxToDiscord ready to send webhooks
-function RbxToDiscord.new(webhookUrl : string, EmbedData : embedData?)
+function RbxToDiscord.new(webhookUrl : string?, EmbedData : embedData?)
 	local self = setmetatable({}, RbxToDiscord)
 
-	self._url = webhookUrl
-	self._payload = EmbedData
+	self._url = webhookUrl or ""
+	self._payload = EmbedData or {}
 	self._payloadDelay = 5   -- Delay before sending another message (default 5 seconds)
 	self._running = runningValue
 	self._color = 0x3498db   -- Default color for the embed
@@ -225,7 +225,7 @@ function RbxToDiscord:sendEmbed(EmbedData : embedData?) : RbxToDiscordImpl
 		self._payload.Fields = {} 
 	end
 	if not self._payload.Footer then
-		self._payload.Footer = "Powered by Roblox" 
+		self._payload.Footer = "Powered by RbxToDiscord" 
 	end
 
 	local embed = {
@@ -269,5 +269,5 @@ function RbxToDiscord:sendEmbed(EmbedData : embedData?) : RbxToDiscordImpl
 
 	return self
 end
-
+-- Return the RbxToDiscord module
 return RbxToDiscord
