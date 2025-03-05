@@ -51,9 +51,12 @@ export type RbxToDiscordImpl = {
 	Colors: {[string] : number},
 	new: (webhookUrl: string, EmbedData: embedData?) -> RbxToDiscordImpl,
 	sendEmbed: (EmbedData: embedData?) -> RbxToDiscordImpl,
+	sendMessage: (message: string) -> RbxToDiscordImpl,
 	createField: (options: fieldImpl) -> field,
 	customColor: (Color: Color3 | string) -> number,
 	createEmbedData: (options: embedDataImpl) -> embedData,
+	setDelay: (delayTime: number) -> RbxToDiscordImpl,
+	connectWebhook: (webhookUrl: string) -> RbxToDiscordImpl,
 	_url: string,
 	_payload: embedDataImpl,
 	_payloadDelay: number,
@@ -115,9 +118,8 @@ end
 -- @return: A table representing the embed data
 function RbxToDiscord:createEmbedData(options : embedDataImpl) : embedData
 	if not options.Color then
-		 options.Color = 0x3498db
+		options.Color = 0x3498db
 	end
-	print(options)
 	return options :: embedData
 end
 
@@ -169,7 +171,7 @@ end
 -- Sets the delay between sending webhooks (the server-wide delay)
 -- @param delayTime: The delay time in seconds
 -- @return: The RbxToDiscord instance for chaining
-function RbxToDiscord:setDelay(delayTime : number)
+function RbxToDiscord:setDelay(delayTime : number) : RbxToDiscordImpl
 	self._payloadDelay = delayTime
 	return self
 end
@@ -177,15 +179,40 @@ end
 -- Connects a new webhook URL to override the previous one
 -- @param webhookUrl: The new Discord webhook URL
 -- @return: The RbxToDiscord instance for chaining
-function RbxToDiscord:connectWebhook(webhookUrl : string)
+function RbxToDiscord:connectWebhook(webhookUrl : string) : RbxToDiscordImpl
 	self._url = webhookUrl
+	return self
+end
+
+function RbxToDiscord:sendMessage(message : string) : RbxToDiscordImpl
+	self._running.Value = true
+	local data = {
+		["content"] = message
+	}
+	
+	local payload = HttpService:JSONEncode(data)
+	
+	local postSuccess, errorMessage = pcall(function()
+		HttpService:PostAsync(self._url, payload, Enum.HttpContentType.ApplicationJson)
+	end)
+
+	if not postSuccess then
+		warn("Failed to send webhook: " .. errorMessage)
+	end
+
+	-- Wait for the specified delay before allowing another webhook to be sent
+	task.spawn(function()
+		task.wait(self._payloadDelay)
+		self._running.Value = false
+	end)
+	
 	return self
 end
 
 -- Sends the embed to the Discord webhook
 -- @param EmbedData: The embed data to send (optional)
 -- @return: The RbxToDiscord instance for chaining
-function RbxToDiscord:sendEmbed(EmbedData : embedData?)
+function RbxToDiscord:sendEmbed(EmbedData : embedData?) : RbxToDiscordImpl
 	if self._running.Value == true then return end
 	self._running.Value = true
 
@@ -194,7 +221,6 @@ function RbxToDiscord:sendEmbed(EmbedData : embedData?)
 	if EmbedData then
 		self._payload = EmbedData
 	end
-	print(self._payload)
 	if not self._payload.Fields then
 		self._payload.Fields = {} 
 	end
@@ -233,8 +259,6 @@ function RbxToDiscord:sendEmbed(EmbedData : embedData?)
 
 	if not postSuccess then
 		warn("Failed to send webhook: " .. errorMessage)
-	else
-		print("Embed sent successfully!")
 	end
 
 	-- Wait for the specified delay before allowing another webhook to be sent
@@ -245,5 +269,5 @@ function RbxToDiscord:sendEmbed(EmbedData : embedData?)
 
 	return self
 end
--- Return the RbxToDiscord module
+
 return RbxToDiscord
