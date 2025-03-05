@@ -1,6 +1,5 @@
 -- A utility to simplify connecting a Discord Webhook to Roblox.
 
-
 -- Services
 local HttpService = game:GetService("HttpService")
 
@@ -12,13 +11,6 @@ if not script:WaitForChild("running") then
 	runningValue.Name = "running"
 else
 	runningValue = script:WaitForChild("running")
-end
-
-if success then
-	gameName = productInfo.Name
-	print("The name of the game is: " .. gameName)
-else
-	warn("Failed to fetch game name.")
 end
 
 -- Type definition for a single field in an embed
